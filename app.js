@@ -28,6 +28,15 @@
     return;
   }
 
+  const BUSINESS_INFO = {
+    storeName: "FOUZA MINI GOLD",
+    region: "TUBAN",
+    address: "Perumahan Tuban Akbar",
+    hours: "Buka setiap hari, 06.00-20.00 WIB",
+    whatsapp: "+62 822-3040-5090",
+    instagram: "fouza_minigold"
+  };
+
   const DEFAULT_SERVICES = [
     "Jual Emas Batangan",
     "Jual Perhiasan",
@@ -46,21 +55,20 @@
   ];
 
   const DEFAULTS = {
-    headline: "HARGA EMAS\nToko Emas Sejahtera Jaya\nInformasi Resmi Harga Hari Ini",
+    headline: "HARGA EMAS\nFOUZA MINI GOLD\nBismillah. Ready 2026",
     currency: "Rp ",
     priceList: [
-      "Emas 24 Karat = 1.742.000",
-      "Buyback 24 Karat = 1.698.000",
-      "Emas 22 Karat = 1.594.000",
-      "Emas 18 Karat = 1.305.000",
-      "Emas 17 Karat = 1.232.000",
-      "Emas Putih 18K = 1.360.000",
-      "Jual Emas Batangan",
-      "Jual Perhiasan",
-      "Beli Kembali (Buyback)",
-      "Tukar Tambah",
-      "Gadai Emas",
-      "Sertifikasi Emas"
+      "Bismillah.",
+      "Ready 2026",
+      "0.5gr = 1.700",
+      "1gr = 3.125",
+      "3gr = 8.850",
+      "5gr = 14.350",
+      "10gr = 28.050",
+      "Min 2pcs",
+      "25gr = 69.600",
+      "50gr = 138.825 (ready malam)",
+      "100gr = 277.500"
     ].join("\n"),
     footer: "Harga dapat berubah sewaktu-waktu mengikuti harga pasar global"
   };
@@ -252,7 +260,7 @@
       .filter((line) => line.length > 0);
 
     if (lines.length === 0) {
-      return [{ type: "note", note: "Tambahkan baris: Emas 24 Karat = 1.742.000" }];
+      return [{ type: "note", note: "Tambahkan baris: 0.5gr = 1.700" }];
     }
 
     return lines.map((line) => {
@@ -347,8 +355,8 @@
       .slice(0, 3);
 
     const mainTitle = headlineLines[0] || "HARGA EMAS";
-    const storeName = headlineLines[1] || "Toko Emas Sejahtera Jaya";
-    const eyebrow = headlineLines[2] || "Informasi Resmi Harga Hari Ini";
+    const storeName = headlineLines[1] || BUSINESS_INFO.storeName;
+    const eyebrow = headlineLines[2] || "Bismillah. Ready 2026";
 
     const rows = parseRows(priceListInput.value, currencyPrefix);
     const priceRows = rows.filter((row) => row.type === "price");
@@ -360,9 +368,7 @@
     const changeData = buildChangeData(featuredNumeric);
 
     const services = noteRows.length > 0 ? noteRows.slice(0, 8) : DEFAULT_SERVICES;
-    while (services.length < 8) {
-      services.push(DEFAULT_SERVICES[services.length]);
-    }
+    const servicesTitle = noteRows.length > 0 ? "Catatan" : "Layanan Kami";
 
     const footerLine = footerInput.value.trim() || DEFAULTS.footer;
 
@@ -372,11 +378,17 @@
       eyebrow,
       dateLabel: formatDateLabel(dateObj),
       dateParts: formatDateParts(dateObj),
+      region: BUSINESS_INFO.region,
       featured: picks.featured,
       buyback: picks.buyback,
       changeData,
       gridRows: picks.gridRows,
       services,
+      servicesTitle,
+      address: BUSINESS_INFO.address,
+      hours: BUSINESS_INFO.hours,
+      whatsapp: BUSINESS_INFO.whatsapp,
+      instagram: BUSINESS_INFO.instagram,
       footerLine,
       market: MARKET_DATA,
       currencyPrefix
@@ -676,7 +688,7 @@
     drawCtx.textBaseline = "middle";
     drawCtx.font = '600 21px "Cinzel", serif';
     drawCtx.fillStyle = "#f9e080";
-    const storeText = trimToWidth(drawCtx, `${state.storeName.toUpperCase()} - SURABAYA`, strip.width - 420);
+    const storeText = trimToWidth(drawCtx, `${state.storeName.toUpperCase()} - ${state.region}`, strip.width - 420);
     drawCtx.fillText(storeText, strip.x + 26, strip.y + strip.height / 2 + 1);
 
     drawCtx.textAlign = "right";
@@ -721,11 +733,11 @@
     drawCtx.textBaseline = "top";
     drawCtx.font = '600 16px "Cinzel", serif';
     drawCtx.fillStyle = "#9a8a5a";
-    drawCtx.fillText("HARGA JUAL - EMAS MURNI", box.x + 20, box.y + 18);
+    drawCtx.fillText("HARGA TERBARU", box.x + 20, box.y + 18);
 
     drawCtx.font = '600 29px "Playfair Display", serif';
     drawCtx.fillStyle = "#e8b4ad";
-    drawCtx.fillText(trimToWidth(drawCtx, `${state.featured.label} / per gram`, box.width - 360), box.x + 20, box.y + 54);
+    drawCtx.fillText(trimToWidth(drawCtx, state.featured.label, box.width - 360), box.x + 20, box.y + 54);
 
     drawCtx.font = '700 73px "Playfair Display", serif';
     drawCtx.fillStyle = "#f9e080";
@@ -745,7 +757,7 @@
 
     drawCtx.font = '500 20px "Raleway", sans-serif';
     drawCtx.fillStyle = "#9a8a5a";
-    drawCtx.fillText("per gram", box.x + 26, box.y + 178);
+    drawCtx.fillText("update hari ini", box.x + 26, box.y + 178);
 
     const tagX = box.x + box.width - 300;
     const tagY = box.y + 74;
@@ -905,7 +917,7 @@
   }
 
   function drawServices(drawCtx, state) {
-    drawSectionTitle(drawCtx, "Layanan Kami", 1360);
+    drawSectionTitle(drawCtx, state.servicesTitle, 1360);
 
     const startX = 100;
     const startY = 1390;
@@ -958,10 +970,10 @@
 
     drawCtx.font = '600 20px "Playfair Display", serif';
     drawCtx.fillStyle = "#f5edd6";
-    drawCtx.fillText("Jl. Tunjungan No. 45, Surabaya", 136, 1698);
+    drawCtx.fillText(trimToWidth(drawCtx, state.address, 440), 136, 1698);
     drawCtx.font = '500 16px "Raleway", sans-serif';
     drawCtx.fillStyle = "#9a8a5a";
-    drawCtx.fillText("Buka: Senin-Sabtu, 09.00-18.00 WIB", 136, 1730);
+    drawCtx.fillText(trimToWidth(drawCtx, state.hours, 440), 136, 1730);
 
     drawCtx.beginPath();
     drawCtx.arc(604, 1712, 13, 0, Math.PI * 2);
@@ -975,10 +987,10 @@
 
     drawCtx.font = '600 20px "Playfair Display", serif';
     drawCtx.fillStyle = "#f5edd6";
-    drawCtx.fillText("0812-3456-7890", 626, 1698);
+    drawCtx.fillText(trimToWidth(drawCtx, state.whatsapp, 300), 626, 1698);
     drawCtx.font = '500 16px "Raleway", sans-serif';
     drawCtx.fillStyle = "#9a8a5a";
-    drawCtx.fillText("Instagram: @sejahterajaya_emas", 626, 1730);
+    drawCtx.fillText(trimToWidth(drawCtx, `Instagram: @${state.instagram}`, 300), 626, 1730);
 
     drawCtx.textAlign = "center";
     drawCtx.textBaseline = "middle";
