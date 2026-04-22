@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gold Flyer Builder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="ambient-shape shape-a" aria-hidden="true"></div>
+    <div class="ambient-shape shape-b" aria-hidden="true"></div>
+
+    <main class="layout">
+      <section class="panel control-panel reveal">
+        <h1>Gold Flyer Builder</h1>
+        <p class="intro">
+          Update the prices only, then generate a ready-to-post 9:16 flyer image.
+        </p>
+
+        <div class="field">
+          <label for="headlineInput">Headline lines</label>
+          <textarea id="headlineInput" rows="3"></textarea>
+        </div>
+
+        <div class="inline-fields">
+          <div class="field">
+            <label for="dateInput">Date</label>
+            <input id="dateInput" type="date" />
+          </div>
+          <div class="field">
+            <label for="currencyInput">Currency prefix</label>
+            <input id="currencyInput" type="text" value="Rp " />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="priceListInput">Price list (your format)</label>
+          <textarea id="priceListInput" rows="12"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="footerInput">Footer line (optional)</label>
+          <input
+            id="footerInput"
+            type="text"
+            placeholder="Order now | WhatsApp 08xxxx"
+          />
+        </div>
+
+        <div class="button-row">
+          <button id="resetBtn" type="button">Load Example</button>
+          <button id="renderBtn" class="primary" type="button">
+            Generate Preview
+          </button>
+        </div>
+
+        <p class="hint">
+          Lines with "=" become price rows. Lines without "=" become note rows.
+        </p>
+      </section>
+
+      <section class="panel preview-panel reveal">
+        <div class="preview-head">
+          <h2>Flyer Preview</h2>
+          <button id="downloadBtn" class="primary" type="button">
+            Download PNG
+          </button>
+        </div>
+
+        <div class="canvas-wrap">
+          <canvas
+            id="flyerCanvas"
+            width="1080"
+            height="1920"
+            aria-label="Generated gold flyer"
+          ></canvas>
+        </div>
+        <p class="ratio-label">Output size: 1080 x 1920 (9:16 ratio)</p>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
