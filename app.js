@@ -2,7 +2,6 @@
 function parseGoldPrices(text) {
   const lines = text.split('\n');
   const prices = [];
-  let label = '';
 
   // Regex patterns for different formats
   const patterns = [
@@ -48,14 +47,9 @@ function parseGoldPrices(text) {
         }
       }
     }
-
-    // If no pattern matched, check if it's a label line
-    if (!matched && /^[a-z\s]+$/i.test(trimmed) && trimmed.length < 40) {
-      label = trimmed;
-    }
   });
 
-  return { prices, label: label || 'Harga Emas' };
+  return { prices };
 }
 
 // Format gram display with Indonesian number format
@@ -66,61 +60,83 @@ function formatGram(g) {
   return `${g.toString().replace('.', ',')} gr`;
 }
 
+// Get color theme CSS
+function getThemeColors(theme) {
+  const themes = {
+    teal: {
+      bg: 'linear-gradient(135deg, #0a3d3a 0%, #0d5a57 50%, #104a47 100%)',
+      title: '#ffffff',
+      subtitle: '#d4af37',
+      card: 'rgba(212, 175, 55, 0.15)',
+      cardBorder: 'rgba(212, 175, 55, 0.4)',
+      price: '#d4af37'
+    },
+    dark: {
+      bg: 'linear-gradient(135deg, #fffdf6 0%, #f8edd8 50%, #f2e2bf 100%)',
+      title: '#5e4411',
+      subtitle: '#9a6b13',
+      card: 'rgba(255, 255, 255, 0.7)',
+      cardBorder: 'rgba(173, 125, 27, 0.3)',
+      price: '#6f4f14'
+    },
+    royal: {
+      bg: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+      title: '#ffffff',
+      subtitle: '#e94560',
+      card: 'rgba(233, 69, 96, 0.15)',
+      cardBorder: 'rgba(233, 69, 96, 0.4)',
+      price: '#e94560'
+    }
+  };
+  return themes[theme] || themes.teal;
+}
+
 // Generate the flyer
 function generateFlyer() {
-  const priceText = document.getElementById('priceListInput').value.trim();
+  const inputText = document.getElementById('inputText').value.trim();
+  const brandName = document.getElementById('brandName').value || 'TOKO EMAS';
+  const customerType = document.getElementById('customerType').value || 'CUSTOMER';
+  const flyerDate = document.getElementById('flyerDate').value || new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+  const contactInfo = document.getElementById('contactInfo').value || '';
+  const colorTheme = document.getElementById('colorTheme').value || 'teal';
   
-  if (!priceText) {
+  if (!inputText) {
     setStatus('Masukkan data harga terlebih dahulu', 'error');
     return;
   }
 
-  const { prices, label } = parseGoldPrices(priceText);
+  const { prices } = parseGoldPrices(inputText);
   
   if (prices.length === 0) {
     setStatus('Format tidak terbaca. Gunakan: "0.5gr = 1700" atau "1gr | 3125"', 'error');
     return;
   }
 
-  // Show preview
+  // Show live preview
   const preview = document.getElementById('parsedPreview');
   if (preview) {
     document.getElementById('parsedCount').textContent = `✓ ${prices.length} harga terdeteksi`;
     document.getElementById('parsedList').innerHTML = prices.map(p =>
-      `<div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+      `<div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(212,175,55,0.2); font-size: 13px;">
         <span style="color: #aaa">${formatGram(p.gram)}</span>
-        <span style="color: #d4a843">Rp ${p.formatted}</span>
+        <span style="color: #d4af37">Rp ${p.formatted}</span>
       </div>`
     ).join('');
     preview.classList.add('show');
   }
 
-  // Build the flyer
-  buildFlyerHTML(prices, label);
+  // Build and render flyer
+  buildFlyer(prices, brandName, customerType, flyerDate, contactInfo, colorTheme);
   setStatus(`Flyer berhasil dibuat dengan ${prices.length} harga`, 'success');
 }
 
 // Build and render the flyer HTML
-function buildFlyerHTML(prices, label) {
-  const headline = document.getElementById('headlineInput').value || 'HARGA EMAS TERBARU';
-  const date = document.getElementById('dateInput').value || new Date().toISOString().split('T')[0];
-  const currency = document.getElementById('currencyInput').value || 'Rp ';
-  const footer = document.getElementById('footerInput').value || 'Kepercayaan Anda, Komitmen Kami';
+function buildFlyer(prices, brandName, customerType, flyerDate, contactInfo, colorTheme) {
+  const theme = getThemeColors(colorTheme);
+  const output = document.getElementById('flyerOutput');
+  if (!output) return;
 
-  // Format date
-  const dateObj = new Date(date + 'T00:00:00');
-  const dateFormatter = new Intl.DateTimeFormat('id-ID', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  });
-  const dateLabel = dateFormatter.format(dateObj);
-
-  // Create flyer container
-  const flyerContainer = document.getElementById('flyerCanvas');
-  if (!flyerContainer) return;
-
-  flyerContainer.innerHTML = '';
+  output.innerHTML = '';
 
   const flyer = document.createElement('div');
   flyer.style.cssText = `
@@ -128,45 +144,59 @@ function buildFlyerHTML(prices, label) {
     max-width: 600px;
     margin: 0 auto;
     padding: 40px;
-    background: linear-gradient(135deg, #fffdf6 0%, #f8edd8 50%, #f2e2bf 100%);
-    color: #5e4411;
+    background: ${theme.bg};
+    color: ${theme.title};
     font-family: 'Playfair Display', serif;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
     position: relative;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-    border-radius: 8px;
+    min-height: 800px;
+    display: flex;
+    flex-direction: column;
   `;
 
-  // Title section
-  const titleSection = document.createElement('div');
-  titleSection.style.cssText = `
+  // Header section
+  const header = document.createElement('div');
+  header.style.cssText = `
     text-align: center;
     margin-bottom: 30px;
-    border-bottom: 2px solid rgba(212, 160, 23, 0.5);
     padding-bottom: 20px;
+    border-bottom: 2px solid ${theme.subtitle};
   `;
-  
-  const mainTitle = document.createElement('h1');
-  mainTitle.textContent = headline;
-  mainTitle.style.cssText = `
-    font-size: 48px;
+
+  const storeName = document.createElement('h1');
+  storeName.textContent = brandName;
+  storeName.style.cssText = `
+    font-size: 36px;
     font-weight: 700;
-    color: #9a6b13;
-    margin: 0 0 10px 0;
-    font-family: 'Cinzel Decorative', serif;
-  `;
-  
-  const subtitle = document.createElement('p');
-  subtitle.textContent = dateLabel;
-  subtitle.style.cssText = `
-    font-size: 14px;
-    color: #8f7542;
-    margin: 0;
+    color: ${theme.title};
+    margin: 0 0 5px 0;
     font-family: 'Cinzel', serif;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
   `;
-  
-  titleSection.appendChild(mainTitle);
-  titleSection.appendChild(subtitle);
+
+  const typeLabel = document.createElement('p');
+  typeLabel.textContent = customerType;
+  typeLabel.style.cssText = `
+    font-size: 12px;
+    color: ${theme.subtitle};
+    margin: 5px 0;
+    letter-spacing: 1px;
+    font-family: 'Cinzel', serif;
+  `;
+
+  const dateLabel = document.createElement('p');
+  dateLabel.textContent = flyerDate;
+  dateLabel.style.cssText = `
+    font-size: 11px;
+    color: ${theme.subtitle};
+    margin: 5px 0 0 0;
+    opacity: 0.9;
+  `;
+
+  header.appendChild(storeName);
+  header.appendChild(typeLabel);
+  header.appendChild(dateLabel);
 
   // Price grid
   const gridSection = document.createElement('div');
@@ -175,33 +205,36 @@ function buildFlyerHTML(prices, label) {
     grid-template-columns: 1fr 1fr;
     gap: 15px;
     margin-bottom: 30px;
+    flex: 1;
   `;
 
-  prices.slice(0, 6).forEach((price, idx) => {
+  prices.slice(0, 12).forEach(price => {
     const card = document.createElement('div');
     card.style.cssText = `
-      background: rgba(255, 255, 255, 0.7);
+      background: ${theme.card};
+      border: 1px solid ${theme.cardBorder};
       padding: 15px;
-      border-radius: 6px;
-      border: 1px solid rgba(173, 125, 27, 0.3);
+      border-radius: 8px;
       text-align: center;
+      backdrop-filter: blur(10px);
     `;
 
     const gramLabel = document.createElement('div');
     gramLabel.textContent = formatGram(price.gram);
     gramLabel.style.cssText = `
-      font-size: 14px;
-      color: #8e6415;
+      font-size: 13px;
+      color: ${theme.subtitle};
       font-family: 'Cinzel', serif;
       margin-bottom: 8px;
       font-weight: 600;
+      letter-spacing: 0.5px;
     `;
 
     const priceLabel = document.createElement('div');
-    priceLabel.textContent = currency + price.formatted;
+    priceLabel.textContent = `Rp ${price.formatted}`;
     priceLabel.style.cssText = `
       font-size: 18px;
-      color: #6f4f14;
+      color: ${theme.price};
       font-weight: 700;
       font-family: 'Playfair Display', serif;
     `;
@@ -212,42 +245,52 @@ function buildFlyerHTML(prices, label) {
   });
 
   // Footer section
-  const footerSection = document.createElement('div');
-  footerSection.style.cssText = `
+  const footer = document.createElement('div');
+  footer.style.cssText = `
     text-align: center;
-    border-top: 2px solid rgba(212, 160, 23, 0.5);
+    border-top: 2px solid ${theme.subtitle};
     padding-top: 20px;
-    margin-top: 20px;
   `;
 
-  const footerText = document.createElement('p');
-  footerText.textContent = footer;
-  footerText.style.cssText = `
-    font-size: 14px;
-    color: #8f7542;
-    font-family: 'EB Garamond', serif;
-    margin: 0;
+  if (contactInfo) {
+    const contact = document.createElement('p');
+    contact.textContent = contactInfo;
+    contact.style.cssText = `
+      font-size: 13px;
+      color: ${theme.subtitle};
+      margin: 0;
+      letter-spacing: 0.5px;
+      font-family: 'Cinzel', serif;
+    `;
+    footer.appendChild(contact);
+  }
+
+  const tagline = document.createElement('p');
+  tagline.textContent = '✦ Kepercayaan Anda, Komitmen Kami ✦';
+  tagline.style.cssText = `
+    font-size: 12px;
+    color: ${theme.subtitle};
+    margin: ${contactInfo ? '8px 0 0 0' : '0'};
     font-style: italic;
+    letter-spacing: 1px;
   `;
-
-  footerSection.appendChild(footerText);
+  footer.appendChild(tagline);
 
   // Assemble flyer
-  flyer.appendChild(titleSection);
+  flyer.appendChild(header);
   flyer.appendChild(gridSection);
-  flyer.appendChild(footerSection);
+  flyer.appendChild(footer);
 
-  flyerContainer.appendChild(flyer);
-  flyerContainer.style.display = 'block';
+  output.appendChild(flyer);
 }
 
 // Set status message
 function setStatus(message, type = 'info') {
-  const statusEl = document.getElementById('status');
+  const statusEl = document.getElementById('statusMsg');
   if (!statusEl) return;
 
   statusEl.textContent = message;
-  statusEl.className = `status ${type}`;
+  statusEl.className = `status-msg ${type}`;
   statusEl.style.opacity = '1';
 
   if (type === 'success') {
@@ -259,8 +302,8 @@ function setStatus(message, type = 'info') {
 
 // Download flyer as image
 async function downloadFlyer() {
-  const flyerCanvas = document.getElementById('flyerCanvas');
-  if (!flyerCanvas || !flyerCanvas.firstChild) {
+  const flyerOutput = document.getElementById('flyerOutput');
+  if (!flyerOutput || !flyerOutput.firstChild) {
     setStatus('Buat flyer terlebih dahulu', 'error');
     return;
   }
@@ -272,95 +315,70 @@ async function downloadFlyer() {
       return;
     }
 
-    const canvas = await html2canvas(flyerCanvas.firstChild, {
+    const canvas = await html2canvas(flyerOutput.firstChild, {
       scale: 2,
       backgroundColor: null,
-      logging: false
+      logging: false,
+      useCORS: true
     });
 
     const link = document.createElement('a');
-    const date = document.getElementById('dateInput').value || new Date().toISOString().split('T')[0];
-    link.download = `gold-flyer-${date}.png`;
+    const timestamp = new Date().toISOString().split('T')[0];
+    link.download = `gold-flyer-${timestamp}.png`;
     link.href = canvas.toDataURL('image/png');
     document.body.appendChild(link);
     link.click();
     link.remove();
 
-    setStatus('Flyer berhasil diunduh', 'success');
+    setStatus('Flyer berhasil diunduh ✓', 'success');
   } catch (error) {
     console.error('Download error:', error);
     setStatus('Gagal mengunduh flyer', 'error');
   }
 }
 
-// Event listeners
+// Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
-  const headlineInput = document.getElementById('headlineInput');
-  const dateInput = document.getElementById('dateInput');
-  const currencyInput = document.getElementById('currencyInput');
-  const priceListInput = document.getElementById('priceListInput');
-  const footerInput = document.getElementById('footerInput');
-  const renderBtn = document.getElementById('renderBtn');
-  const downloadBtn = document.getElementById('downloadBtn');
-  const resetBtn = document.getElementById('resetBtn');
+  const inputText = document.getElementById('inputText');
+  const brandName = document.getElementById('brandName');
+  const flyerDate = document.getElementById('flyerDate');
 
-  // Set default date
-  if (dateInput && !dateInput.value) {
-    const today = new Date().toISOString().split('T')[0];
-    dateInput.value = today;
-  }
-
-  // Render button
-  if (renderBtn) {
-    renderBtn.addEventListener('click', generateFlyer);
-  }
-
-  // Download button
-  if (downloadBtn) {
-    downloadBtn.addEventListener('click', downloadFlyer);
-  }
-
-  // Reset button
-  if (resetBtn) {
-    resetBtn.addEventListener('click', () => {
-      headlineInput.value = 'HARGA EMAS TERBARU';
-      dateInput.value = new Date().toISOString().split('T')[0];
-      currencyInput.value = 'Rp ';
-      priceListInput.value = '0,5gr = 1.700\n1gr = 3.400\n2gr = 6.800\n5gr = 17.000\n10gr = 34.000\n25gr = 85.000';
-      footerInput.value = 'Kepercayaan Anda, Komitmen Kami';
-      generateFlyer();
+  // Otomatis set tanggal ke hari ini setiap kali page load
+  if (flyerDate) {
+    flyerDate.value = new Date().toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
     });
   }
 
   // Live preview with debounce
   let debounceTimer = null;
-  const updatePreview = () => {
-    const priceText = priceListInput.value.trim();
-    if (priceText.length > 5) {
-      const { prices } = parseGoldPrices(priceText);
-      if (prices.length > 0) {
-        const preview = document.getElementById('parsedPreview');
-        if (preview) {
-          document.getElementById('parsedCount').textContent = `✓ ${prices.length} harga terdeteksi`;
-          document.getElementById('parsedList').innerHTML = prices.map(p =>
-            `<div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px;">
-              <span style="color: #aaa">${formatGram(p.gram)}</span>
-              <span style="color: #d4a843">Rp ${p.formatted}</span>
-            </div>`
-          ).join('');
-          preview.classList.add('show');
-        }
-      }
-    }
-  };
-
-  if (priceListInput) {
-    priceListInput.addEventListener('input', () => {
+  if (inputText) {
+    inputText.addEventListener('input', () => {
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(updatePreview, 400);
+      debounceTimer = setTimeout(() => {
+        const text = inputText.value.trim();
+        if (text.length > 5) {
+          const { prices } = parseGoldPrices(text);
+          if (prices.length > 0) {
+            const preview = document.getElementById('parsedPreview');
+            if (preview) {
+              document.getElementById('parsedCount').textContent = `✓ ${prices.length} harga terdeteksi`;
+              document.getElementById('parsedList').innerHTML = prices.map(p =>
+                `<div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px;">
+                  <span style="color: #aaa">${formatGram(p.gram)}</span>
+                  <span style="color: #d4af37">Rp ${p.formatted}</span>
+                </div>`
+              ).join('');
+              preview.classList.add('show');
+            }
+          }
+        }
+      }, 400);
     });
   }
 
-  // Initial render
+  // Auto-generate on load with default values
   generateFlyer();
 });
