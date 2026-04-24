@@ -1,90 +1,96 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gold Flyer Builder</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700&family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Raleway:wght@300;400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <div class="ambient-shape shape-a" aria-hidden="true"></div>
-    <div class="ambient-shape shape-b" aria-hidden="true"></div>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gold Flyer Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
 
-    <main class="layout">
-      <section class="panel control-panel reveal">
-        <h1>Gold Flyer Builder</h1>
-        <p class="intro">
-          Update the prices only, then generate a ready-to-post 9:16 flyer image.
-        </p>
+<div class="app-header">
+  <h1>✦ GOLD FLYER GENERATOR ✦</h1>
+  <p>Paste harga emas → Generate pamflet otomatis</p>
+</div>
 
-        <div class="field">
-          <label for="headlineInput">Headline lines</label>
-          <textarea id="headlineInput" rows="3"></textarea>
-        </div>
+<div class="workspace">
+  <!-- LEFT: INPUT PANEL -->
+  <div class="panel">
+    <h2>✦ Input Harga</h2>
 
-        <div class="inline-fields">
-          <div class="field">
-            <label for="dateInput">Date</label>
-            <input id="dateInput" type="date" />
-          </div>
-          <div class="field">
-            <label for="currencyInput">Currency prefix</label>
-            <input id="currencyInput" type="text" value="Rp " />
-          </div>
-        </div>
+    <textarea id="inputText" placeholder="Paste teks harga emas di sini...
 
-        <div class="field">
-          <label for="priceListInput">Price list (your format)</label>
-          <textarea id="priceListInput" rows="12"></textarea>
-        </div>
+Contoh:
+🛑BISMILLAH
+Ready 2026
+0.5gr = 1.700
+1gr = 3.100
+2gr = 6.000
+3gr = 8.800
+5gr = 14.250
+10gr = 27.850
+25gr = 69.000
+50gr = 137.600
+100gr = 275.000
 
-        <div class="field">
-          <label for="footerInput">Footer line (optional)</label>
-          <input
-            id="footerInput"
-            type="text"
-            placeholder="Order now | WhatsApp 08xxxx"
-          />
-        </div>
+Atau format lain:
+0,5 gr | 1.640.000
+1 gr = Rp3.140.000
+dst..."></textarea>
 
-        <div class="button-row">
-          <button id="resetBtn" type="button">Load Example</button>
-          <button id="renderBtn" class="primary" type="button">
-            Generate Preview
-          </button>
-        </div>
+    <div class="parsed-preview" id="parsedPreview">
+      <div class="tag" id="parsedCount"></div>
+      <div id="parsedList" style="margin-top:6px;"></div>
+    </div>
 
-        <p class="hint">
-          Lines with "=" become price rows. Lines without "=" become note rows.
-        </p>
-      </section>
+    <div class="options-row">
+      <div class="opt-group">
+        <label>Nama Toko</label>
+        <input type="text" id="brandName" placeholder="HAGIA SOFIA" value="HAGIA SOFIA">
+      </div>
+      <div class="opt-group">
+        <label>Tipe Customer</label>
+        <input type="text" id="customerType" placeholder="CUSTOMER" value="CUSTOMER">
+      </div>
+      <div class="opt-group">
+        <label>Tanggal</label>
+        <input type="text" id="flyerDate" placeholder="14 Maret 2026">
+      </div>
+      <div class="opt-group">
+        <label>Kontak</label>
+        <input type="text" id="contactInfo" placeholder="0812-3456-7890">
+      </div>
+      <div class="opt-group full-width">
+        <label>Tema Warna</label>
+        <select id="colorTheme">
+          <option value="teal">Teal Elegan (seperti contoh)</option>
+          <option value="dark">Hitam & Emas</option>
+          <option value="royal">Royal Navy</option>
+        </select>
+      </div>
+    </div>
 
-      <section class="panel preview-panel reveal">
-        <div class="preview-head">
-          <h2>Flyer Preview</h2>
-          <button id="downloadBtn" class="primary" type="button">
-            Download PNG
-          </button>
-        </div>
+    <button class="generate-btn" onclick="generateFlyer()">✦ GENERATE PAMFLET</button>
+    <button class="download-btn" onclick="downloadFlyer()">↓ Download sebagai PNG</button>
+    <div class="status-msg" id="statusMsg"></div>
+  </div>
 
-        <div class="canvas-wrap">
-          <canvas
-            id="flyerCanvas"
-            width="1080"
-            height="1920"
-            aria-label="Generated gold flyer"
-          ></canvas>
-        </div>
-        <p class="ratio-label">Output size: 1080 x 1920 (9:16 ratio)</p>
-      </section>
-    </main>
+  <!-- RIGHT: FLYER PREVIEW -->
+  <div class="flyer-wrapper">
+    <div id="flyerOutput">
+      <div class="empty-flyer">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+          <rect x="8" y="8" width="48" height="48" rx="6" stroke="currentColor" stroke-width="2"/>
+          <path d="M20 32h24M20 22h16M20 42h20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <p>Pamflet Anda akan<br>muncul di sini setelah<br>klik <strong>Generate</strong></p>
+      </div>
+    </div>
+  </div>
+</div>
 
-    <script src="app.js"></script>
-  </body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="app.js"></script>
+</body>
 </html>
