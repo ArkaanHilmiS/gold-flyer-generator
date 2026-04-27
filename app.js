@@ -325,9 +325,15 @@ function parseGoldPrices(text) {
           const gramMatch = gramPart.match(/(\d+[.,]?\d*)/);
           if (gramMatch && !isNaN(priceNum)) {
             const gram = parseFloat(gramMatch[1].replace(',', '.'));
+            // Extract label: anything after the gram number + optional 'gr/gram' keyword
+            // e.g. "10gr (2024)" -> label = "(2024)"
+            // e.g. "10 gr Lama" -> label = "Lama"
+            const afterNum = gramPart.substring(gramMatch.index + gramMatch[0].length).trim();
+            const labelMatch = afterNum.replace(/^\s*(?:gr(?:am)?)?\s*/i, '').trim();
             prices.push({
               gram,
               gramText: gramPart,
+              label: labelMatch || '',
               price: priceNum,
               formatted: new Intl.NumberFormat('id-ID').format(priceNum)
             });
@@ -342,6 +348,11 @@ function parseGoldPrices(text) {
 
 function formatGram(g) {
   return Number.isInteger(g) ? `${g} gr` : `${g.toString().replace('.', ',')} gr`;
+}
+
+function formatGramWithLabel(p) {
+  const base = formatGram(p.gram);
+  return p.label ? `${base} ${p.label}` : base;
 }
 
 // ---- THEME SELECTION ----
@@ -391,7 +402,7 @@ function showParsedPreview(prices) {
   document.getElementById('parsedCount').textContent = `${prices.length} harga terdeteksi`;
   document.getElementById('parsedList').innerHTML = prices.map(p =>
     `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;">
-      <span style="color:#aaa">${formatGram(p.gram)}</span>
+      <span style="color:#aaa">${formatGramWithLabel(p)}</span>
       <span style="color:#d4a843;font-weight:600">Rp ${p.formatted}</span>
     </div>`
   ).join('');
@@ -411,7 +422,7 @@ function buildFlyer(prices, brandName, customerType, flyerDate, contactInfo, gre
   // Build price rows
   const priceRows = prices.slice(0, 12).map((p, i) =>
     `<div class="price-row" style="background:${i % 2 === 0 ? t.rowEven : t.rowOdd}">
-      <span class="gram-label" style="color:${t.gramColor}">${formatGram(p.gram)}</span>
+      <span class="gram-label" style="color:${t.gramColor}">${formatGram(p.gram)}${p.label ? ` <span class="gram-note" style="color:${t.subtitleColor};font-size:0.72rem;font-weight:400;font-style:italic">${p.label}</span>` : ''}</span>
       <span class="price-label" style="color:${t.priceColor}">Rp ${p.formatted}</span>
     </div>`
   ).join('');
@@ -620,7 +631,7 @@ function buildElegantCaption(prices, brand, custType, date, contact, greeting, t
   lines.push('│   📊 DAFTAR HARGA     │');
   lines.push('├──────────────────────┤');
   prices.forEach(p => {
-    const gram = formatGram(p.gram).padEnd(8);
+    const gram = formatGramWithLabel(p).padEnd(12);
     lines.push(`│  ${gram} ➜  Rp ${formatPrice(p)}`);
   });
   lines.push('└──────────────────────┘');
@@ -650,7 +661,7 @@ function buildCleanCaption(prices, brand, custType, date, contact, greeting, t) 
   lines.push('Ready 2026');
   lines.push('');
   prices.forEach(p => {
-    lines.push(`${formatGram(p.gram)} = ${formatPrice(p)}`);
+    lines.push(`${formatGramWithLabel(p)} = ${formatPrice(p)}`);
   });
   lines.push('');
   lines.push('_Harga sewaktu-waktu dapat berubah_');
@@ -679,7 +690,7 @@ function buildEmojiCaption(prices, brand, custType, date, contact, greeting, t) 
   lines.push('💰 *DAFTAR HARGA EMAS ANTAM* 💰');
   lines.push('');
   prices.forEach(p => {
-    lines.push(`🥇 ${formatGram(p.gram)} ▸ Rp ${formatPrice(p)}`);
+    lines.push(`🥇 ${formatGramWithLabel(p)} ▸ Rp ${formatPrice(p)}`);
   });
   lines.push('');
   lines.push('⚠️ _Harga sewaktu-waktu dapat berubah_');
