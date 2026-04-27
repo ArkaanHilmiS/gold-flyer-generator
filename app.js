@@ -542,14 +542,13 @@ async function downloadFlyer() {
     const w = rect.width;
     const h = rect.height;
 
-    // Step 1: Create final canvas and draw gradient manually
+    // ---- Step 1: Create final canvas and draw gradient manually ----
     const finalCanvas = document.createElement('canvas');
     finalCanvas.width = w * scale;
     finalCanvas.height = h * scale;
     const ctx = finalCanvas.getContext('2d');
     ctx.scale(scale, scale);
 
-    // Draw gradient background
     if (t && t.bg) {
       const { angle, stops } = parseGradient(t.bg);
       const coords = gradientCoords(angle, w, h);
@@ -562,86 +561,89 @@ async function downloadFlyer() {
     roundedRect(ctx, 0, 0, w, h, 20);
     ctx.fill();
 
-    // Step 2: Capture content with html2canvas (transparent background, solid text)
-    // Extract the darkest bg color for blending rgba colors
+    // ---- Step 2: Modify LIVE DOM for capture ----
+    // Save originals so we can restore after capture
+    const origFlyerBg = flyerEl.style.background;
+    const allChildren = flyerEl.querySelectorAll('*');
+    const savedStyles = [];
+
+    // Get theme base color for blending
     const bgColors = t.bg.match(/#[0-9a-fA-F]{6}/g) || ['#1a1a2e'];
     const baseBg = bgColors[0];
+    const bgR = parseInt(baseBg.substr(1,2), 16);
+    const bgG = parseInt(baseBg.substr(3,2), 16);
+    const bgB = parseInt(baseBg.substr(5,2), 16);
 
+    function blendRgba(colorStr) {
+      const m = colorStr.match(/rgba\(\s*(\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\s*\)/);
+      if (!m) return null;
+      const a = parseFloat(m[4]);
+      if (a >= 0.99) return null; // already opaque
+      const nr = Math.round(bgR*(1-a) + parseInt(m[1])*a);
+      const ng = Math.round(bgG*(1-a) + parseInt(m[2])*a);
+      const nb = Math.round(bgB*(1-a) + parseInt(m[3])*a);
+      return `rgb(${nr}, ${ng}, ${nb})`;
+    }
+
+    // Remove gradient bg (we draw it manually on canvas)
+    flyerEl.style.background = 'transparent';
+
+    // Convert all rgba colors to solid on the LIVE DOM
+    allChildren.forEach((child, i) => {
+      savedStyles[i] = {
+        color: child.style.color,
+        backgroundColor: child.style.backgroundColor,
+        borderColor: child.style.borderColor,
+        opacity: child.style.opacity
+      };
+
+      // Use getComputedStyle on the REAL DOM (has stylesheets!)
+      const cs = window.getComputedStyle(child);
+
+      // Fix text color
+      if (cs.color && cs.color.includes('rgba')) {
+        const solid = blendRgba(cs.color);
+        if (solid) child.style.color = solid;
+      }
+
+      // Fix background color
+      if (cs.backgroundColor && cs.backgroundColor.includes('rgba') && !cs.backgroundColor.includes(', 0)')) {
+        const solid = blendRgba(cs.backgroundColor);
+        if (solid) child.style.backgroundColor = solid;
+      }
+
+      // Fix border color
+      if (cs.borderColor && cs.borderColor.includes('rgba')) {
+        const solid = blendRgba(cs.borderColor);
+        if (solid) child.style.borderColor = solid;
+      }
+
+      // Force opacity to 1
+      child.style.opacity = '1';
+    });
+
+    // ---- Step 3: Capture with html2canvas ----
     const contentCanvas = await html2canvas(flyerEl, {
       scale: scale,
       backgroundColor: null,
       logging: false,
       useCORS: true,
-      allowTaint: true,
-      onclone: function(clonedDoc) {
-        const el = clonedDoc.getElementById('flyerCanvas');
-        if (!el) return;
-        // Remove gradient background - we draw it manually on canvas
-        el.style.background = 'none';
-        el.style.backgroundColor = 'transparent';
-
-        // Parse theme bg color for blending
-        const bgR = parseInt(baseBg.substr(1,2), 16);
-        const bgG = parseInt(baseBg.substr(3,2), 16);
-        const bgB = parseInt(baseBg.substr(5,2), 16);
-
-        function blendRgba(colorStr) {
-          const m = colorStr.match(/rgba\(\s*(\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\s*\)/);
-          if (!m) return null;
-          const a = parseFloat(m[4]);
-          if (a >= 1) return null;
-          const nr = Math.round(bgR*(1-a) + parseInt(m[1])*a);
-          const ng = Math.round(bgG*(1-a) + parseInt(m[2])*a);
-          const nb = Math.round(bgB*(1-a) + parseInt(m[3])*a);
-          return `rgb(${nr}, ${ng}, ${nb})`;
-        }
-
-        // Walk ALL elements and force every color to be solid/opaque
-        el.querySelectorAll('*').forEach(child => {
-          const cs = clonedDoc.defaultView.getComputedStyle(child);
-
-          // Fix text color
-          const color = cs.color;
-          if (color && color.includes('rgba')) {
-            const solid = blendRgba(color);
-            if (solid) child.style.color = solid;
-          }
-
-          // Fix background color (but keep transparent ones transparent)
-          const bgColor = cs.backgroundColor;
-          if (bgColor && bgColor.includes('rgba') && !bgColor.includes(', 0)')) {
-            const solid = blendRgba(bgColor);
-            if (solid) child.style.backgroundColor = solid;
-          }
-
-          // Fix border color
-          const borderColor = cs.borderColor;
-          if (borderColor && borderColor.includes('rgba')) {
-            const solid = blendRgba(borderColor);
-            if (solid) child.style.borderColor = solid;
-          }
-
-          // Also check inline styles directly
-          ['color', 'backgroundColor', 'borderColor'].forEach(prop => {
-            const val = child.style[prop];
-            if (val && val.includes('rgba')) {
-              const solid = blendRgba(val);
-              if (solid) child.style[prop] = solid;
-            }
-          });
-
-          // Force opacity to 1
-          if (cs.opacity !== '1') {
-            child.style.opacity = '1';
-          }
-        });
-      }
+      allowTaint: true
     });
 
-    // Step 3: Overlay content on top of gradient
+    // ---- Step 4: Restore LIVE DOM to original state ----
+    flyerEl.style.background = origFlyerBg;
+    allChildren.forEach((child, i) => {
+      child.style.color = savedStyles[i].color;
+      child.style.backgroundColor = savedStyles[i].backgroundColor;
+      child.style.borderColor = savedStyles[i].borderColor;
+      child.style.opacity = savedStyles[i].opacity;
+    });
+
+    // ---- Step 5: Overlay content on gradient ----
     ctx.drawImage(contentCanvas, 0, 0, w, h);
 
-    // Step 4: Download
+    // ---- Step 6: Download ----
     const link = document.createElement('a');
     link.download = `gold-flyer-${selectedTheme}-${new Date().toISOString().split('T')[0]}.png`;
     link.href = finalCanvas.toDataURL('image/png');
