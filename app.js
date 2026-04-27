@@ -488,31 +488,43 @@ async function downloadFlyer() {
     if (typeof html2canvas === 'undefined') { setStatus('Library html2canvas tidak tersedia', 'error'); return; }
     setStatus('Memproses download...', 'info');
 
-    // Get the theme's base background color for fallback
     const t = THEMES[selectedTheme];
-    // Extract a solid color from the gradient for html2canvas background
-    const bgMatch = t && t.bg ? t.bg.match(/#[0-9a-fA-F]{6}/) : null;
-    const solidBg = bgMatch ? bgMatch[0] : '#1a1a2e';
 
     const canvas = await html2canvas(flyerEl, {
       scale: 3,
-      backgroundColor: solidBg,
+      backgroundColor: null,
       logging: false,
       useCORS: true,
       allowTaint: true,
       onclone: function(clonedDoc) {
         const clonedFlyer = clonedDoc.getElementById('flyerCanvas');
         if (!clonedFlyer) return;
-        // Remove any backdrop-filter since html2canvas doesn't support it
-        clonedFlyer.querySelectorAll('*').forEach(el => {
-          if (el.style.backdropFilter) el.style.backdropFilter = 'none';
-          if (el.style.webkitBackdropFilter) el.style.webkitBackdropFilter = 'none';
-        });
-        // Ensure the flyer background is solid
+
+        // 1. Move gradient directly onto the main .flyer element
+        if (t) {
+          clonedFlyer.style.background = t.bg;
+        }
+
+        // 2. Hide the separate absolute-positioned background layer
         const bgEl = clonedFlyer.querySelector('.flyer-bg');
-        if (bgEl && t) {
-          bgEl.style.background = t.bg;
-          bgEl.style.opacity = '1';
+        if (bgEl) bgEl.style.display = 'none';
+
+        // 3. Hide the decorations overlay (radial gradients cause issues)
+        const decoEl = clonedFlyer.querySelector('.flyer-decorations');
+        if (decoEl) decoEl.style.display = 'none';
+
+        // 4. Remove all backdrop-filter and -webkit-backdrop-filter
+        clonedFlyer.querySelectorAll('*').forEach(el => {
+          const cs = el.style;
+          if (cs.backdropFilter) cs.backdropFilter = 'none';
+          if (cs.webkitBackdropFilter) cs.webkitBackdropFilter = 'none';
+        });
+
+        // 5. Make .flyer-inner fully opaque
+        const innerEl = clonedFlyer.querySelector('.flyer-inner');
+        if (innerEl) {
+          innerEl.style.position = 'relative';
+          innerEl.style.zIndex = '1';
         }
       }
     });
