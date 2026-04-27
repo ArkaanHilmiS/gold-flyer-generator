@@ -547,23 +547,8 @@ textarea::placeholder {
   animation: fadeInUp 0.5s ease-out;
 }
 
-.flyer-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-}
-
-.flyer-decorations {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  overflow: hidden;
-}
-
 .flyer-inner {
   position: relative;
-  z-index: 2;
   padding: 32px 30px;
   display: flex;
   flex-direction: column;

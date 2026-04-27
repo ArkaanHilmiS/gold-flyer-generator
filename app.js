@@ -431,12 +431,7 @@ function buildFlyer(prices, brandName, customerType, flyerDate, contactInfo, gre
   const bars = Array(5).fill('<div class="gold-bar-mini"></div>').join('');
 
   const flyerHTML = `
-    <div class="flyer" id="flyerCanvas">
-      <div class="flyer-bg" style="background:${t.bg}"></div>
-      <div class="flyer-decorations">
-        ${t.decoHTML}
-        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.06) 0%, transparent 60%),radial-gradient(ellipse at 10% 80%, rgba(255,255,255,0.04) 0%, transparent 50%)"></div>
-      </div>
+    <div class="flyer" id="flyerCanvas" style="background:${t.bg};">
       <div class="flyer-inner">
         <!-- Header -->
         <div class="flyer-header" style="background:${t.headerBg};border-radius:14px;padding:20px 22px 16px;margin-bottom:16px;">
@@ -499,45 +494,12 @@ async function downloadFlyer() {
     if (typeof html2canvas === 'undefined') { setStatus('Library html2canvas tidak tersedia', 'error'); return; }
     setStatus('Memproses download...', 'info');
 
-    const t = THEMES[selectedTheme];
-
     const canvas = await html2canvas(flyerEl, {
       scale: 3,
       backgroundColor: null,
       logging: false,
       useCORS: true,
-      allowTaint: true,
-      onclone: function(clonedDoc) {
-        const clonedFlyer = clonedDoc.getElementById('flyerCanvas');
-        if (!clonedFlyer) return;
-
-        // 1. Move gradient directly onto the main .flyer element
-        if (t) {
-          clonedFlyer.style.background = t.bg;
-        }
-
-        // 2. Hide the separate absolute-positioned background layer
-        const bgEl = clonedFlyer.querySelector('.flyer-bg');
-        if (bgEl) bgEl.style.display = 'none';
-
-        // 3. Hide the decorations overlay (radial gradients cause issues)
-        const decoEl = clonedFlyer.querySelector('.flyer-decorations');
-        if (decoEl) decoEl.style.display = 'none';
-
-        // 4. Remove all backdrop-filter and -webkit-backdrop-filter
-        clonedFlyer.querySelectorAll('*').forEach(el => {
-          const cs = el.style;
-          if (cs.backdropFilter) cs.backdropFilter = 'none';
-          if (cs.webkitBackdropFilter) cs.webkitBackdropFilter = 'none';
-        });
-
-        // 5. Make .flyer-inner fully opaque
-        const innerEl = clonedFlyer.querySelector('.flyer-inner');
-        if (innerEl) {
-          innerEl.style.position = 'relative';
-          innerEl.style.zIndex = '1';
-        }
-      }
+      allowTaint: true
     });
     const link = document.createElement('a');
     link.download = `gold-flyer-${selectedTheme}-${new Date().toISOString().split('T')[0]}.png`;
