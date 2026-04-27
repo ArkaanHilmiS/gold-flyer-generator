@@ -562,7 +562,11 @@ async function downloadFlyer() {
     roundedRect(ctx, 0, 0, w, h, 20);
     ctx.fill();
 
-    // Step 2: Capture content with html2canvas (transparent background)
+    // Step 2: Capture content with html2canvas (transparent background, solid text)
+    // Extract the darkest bg color for blending rgba colors
+    const bgColors = t.bg.match(/#[0-9a-fA-F]{6}/g) || ['#1a1a2e'];
+    const baseBg = bgColors[0];
+
     const contentCanvas = await html2canvas(flyerEl, {
       scale: scale,
       backgroundColor: null,
@@ -570,12 +574,67 @@ async function downloadFlyer() {
       useCORS: true,
       allowTaint: true,
       onclone: function(clonedDoc) {
-        // Remove the gradient from the cloned element so content is on transparent bg
         const el = clonedDoc.getElementById('flyerCanvas');
-        if (el) {
-          el.style.background = 'none';
-          el.style.backgroundColor = 'transparent';
+        if (!el) return;
+        // Remove gradient background - we draw it manually on canvas
+        el.style.background = 'none';
+        el.style.backgroundColor = 'transparent';
+
+        // Parse theme bg color for blending
+        const bgR = parseInt(baseBg.substr(1,2), 16);
+        const bgG = parseInt(baseBg.substr(3,2), 16);
+        const bgB = parseInt(baseBg.substr(5,2), 16);
+
+        function blendRgba(colorStr) {
+          const m = colorStr.match(/rgba\(\s*(\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\s*\)/);
+          if (!m) return null;
+          const a = parseFloat(m[4]);
+          if (a >= 1) return null;
+          const nr = Math.round(bgR*(1-a) + parseInt(m[1])*a);
+          const ng = Math.round(bgG*(1-a) + parseInt(m[2])*a);
+          const nb = Math.round(bgB*(1-a) + parseInt(m[3])*a);
+          return `rgb(${nr}, ${ng}, ${nb})`;
         }
+
+        // Walk ALL elements and force every color to be solid/opaque
+        el.querySelectorAll('*').forEach(child => {
+          const cs = clonedDoc.defaultView.getComputedStyle(child);
+
+          // Fix text color
+          const color = cs.color;
+          if (color && color.includes('rgba')) {
+            const solid = blendRgba(color);
+            if (solid) child.style.color = solid;
+          }
+
+          // Fix background color (but keep transparent ones transparent)
+          const bgColor = cs.backgroundColor;
+          if (bgColor && bgColor.includes('rgba') && !bgColor.includes(', 0)')) {
+            const solid = blendRgba(bgColor);
+            if (solid) child.style.backgroundColor = solid;
+          }
+
+          // Fix border color
+          const borderColor = cs.borderColor;
+          if (borderColor && borderColor.includes('rgba')) {
+            const solid = blendRgba(borderColor);
+            if (solid) child.style.borderColor = solid;
+          }
+
+          // Also check inline styles directly
+          ['color', 'backgroundColor', 'borderColor'].forEach(prop => {
+            const val = child.style[prop];
+            if (val && val.includes('rgba')) {
+              const solid = blendRgba(val);
+              if (solid) child.style[prop] = solid;
+            }
+          });
+
+          // Force opacity to 1
+          if (cs.opacity !== '1') {
+            child.style.opacity = '1';
+          }
+        });
       }
     });
 
