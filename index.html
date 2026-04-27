@@ -3,92 +3,297 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gold Flyer Generator</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<title>Gold Flyer Generator — Buat Pamflet Emas Premium</title>
+<meta name="description" content="Generator pamflet harga emas otomatis dengan berbagai tema menarik. Buat flyer profesional untuk toko emas Anda dalam hitungan detik.">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<div class="app-header">
-  <h1>✦ GOLD FLYER GENERATOR ✦</h1>
-  <p>Paste harga emas → Generate pamflet otomatis</p>
-</div>
+<!-- Animated background particles -->
+<div class="bg-particles" id="bgParticles"></div>
 
-<div class="workspace">
-  <!-- LEFT: INPUT PANEL -->
-  <div class="panel">
-    <h2>✦ Input Harga</h2>
+<!-- HEADER -->
+<header class="app-header" id="appHeader">
+  <div class="header-badge">PREMIUM</div>
+  <h1>
+    <span class="gold-icon">✦</span>
+    Gold Flyer Generator
+    <span class="gold-icon">✦</span>
+  </h1>
+  <p class="header-sub">Buat pamflet harga emas profesional dalam hitungan detik</p>
+</header>
 
-    <textarea id="inputText" placeholder="Paste teks harga emas di sini...
+<!-- MAIN WORKSPACE -->
+<main class="workspace" id="workspace">
+
+  <!-- LEFT: CONTROL PANEL -->
+  <aside class="panel control-panel" id="controlPanel">
+
+    <!-- STEP 1: Theme Selection -->
+    <section class="panel-section" id="sectionTheme">
+      <div class="section-header">
+        <span class="step-badge">1</span>
+        <h2>Pilih Tema</h2>
+      </div>
+
+      <!-- Theme Category Tabs -->
+      <div class="theme-tabs" id="themeTabs">
+        <button class="theme-tab active" data-category="daily" id="tabDaily">
+          <span>📅</span> Harian
+        </button>
+        <button class="theme-tab" data-category="nasional" id="tabNasional">
+          <span>🇮🇩</span> Nasional
+        </button>
+        <button class="theme-tab" data-category="keagamaan" id="tabKeagamaan">
+          <span>🕌</span> Keagamaan
+        </button>
+        <button class="theme-tab" data-category="spesial" id="tabSpesial">
+          <span>🎉</span> Spesial
+        </button>
+      </div>
+
+      <div class="theme-grid" id="themeGrid">
+        <!-- Daily themes -->
+        <button class="theme-card active" data-theme="normal" data-category="daily" id="themeNormal">
+          <span class="theme-emoji">📊</span>
+          <span class="theme-name">Normal</span>
+        </button>
+        <button class="theme-card" data-theme="weekend" data-category="daily" id="themeWeekend">
+          <span class="theme-emoji">🌤️</span>
+          <span class="theme-name">Weekend</span>
+        </button>
+        <button class="theme-card" data-theme="long-weekend" data-category="daily" id="themeLongWeekend">
+          <span class="theme-emoji">🏝️</span>
+          <span class="theme-name">Long Weekend</span>
+        </button>
+
+        <!-- Nasional themes -->
+        <button class="theme-card" data-theme="kemerdekaan" data-category="nasional" id="themeKemerdekaan">
+          <span class="theme-emoji">🇮🇩</span>
+          <span class="theme-name">Kemerdekaan</span>
+        </button>
+        <button class="theme-card" data-theme="kartini" data-category="nasional" id="themeKartini">
+          <span class="theme-emoji">👩</span>
+          <span class="theme-name">Hari Kartini</span>
+        </button>
+        <button class="theme-card" data-theme="pendidikan" data-category="nasional" id="themePendidikan">
+          <span class="theme-emoji">📚</span>
+          <span class="theme-name">Hari Pendidikan</span>
+        </button>
+        <button class="theme-card" data-theme="guru" data-category="nasional" id="themeGuru">
+          <span class="theme-emoji">👨‍🏫</span>
+          <span class="theme-name">Hari Guru</span>
+        </button>
+        <button class="theme-card" data-theme="pancasila" data-category="nasional" id="themePancasila">
+          <span class="theme-emoji">🦅</span>
+          <span class="theme-name">Hari Pancasila</span>
+        </button>
+        <button class="theme-card" data-theme="sumpah-pemuda" data-category="nasional" id="themeSumpahPemuda">
+          <span class="theme-emoji">🤝</span>
+          <span class="theme-name">Sumpah Pemuda</span>
+        </button>
+
+        <!-- Keagamaan themes -->
+        <button class="theme-card" data-theme="lebaran" data-category="keagamaan" id="themeLebaran">
+          <span class="theme-emoji">🌙</span>
+          <span class="theme-name">Lebaran</span>
+        </button>
+        <button class="theme-card" data-theme="idul-adha" data-category="keagamaan" id="themeIdulAdha">
+          <span class="theme-emoji">🐪</span>
+          <span class="theme-name">Idul Adha</span>
+        </button>
+        <button class="theme-card" data-theme="maulid" data-category="keagamaan" id="themeMaulid">
+          <span class="theme-emoji">🕌</span>
+          <span class="theme-name">Maulid Nabi</span>
+        </button>
+        <button class="theme-card" data-theme="isra-miraj" data-category="keagamaan" id="themeIsraMiraj">
+          <span class="theme-emoji">✨</span>
+          <span class="theme-name">Isra Mi'raj</span>
+        </button>
+        <button class="theme-card" data-theme="natal" data-category="keagamaan" id="themeNatal">
+          <span class="theme-emoji">🎄</span>
+          <span class="theme-name">Natal</span>
+        </button>
+        <button class="theme-card" data-theme="nyepi" data-category="keagamaan" id="themeNyepi">
+          <span class="theme-emoji">🕯️</span>
+          <span class="theme-name">Nyepi</span>
+        </button>
+        <button class="theme-card" data-theme="imlek" data-category="keagamaan" id="themeImlek">
+          <span class="theme-emoji">🏮</span>
+          <span class="theme-name">Imlek</span>
+        </button>
+        <button class="theme-card" data-theme="waisak" data-category="keagamaan" id="themeWaisak">
+          <span class="theme-emoji">🪷</span>
+          <span class="theme-name">Waisak</span>
+        </button>
+
+        <!-- Spesial themes -->
+        <button class="theme-card" data-theme="liburan" data-category="spesial" id="themeLiburan">
+          <span class="theme-emoji">🏖️</span>
+          <span class="theme-name">Liburan</span>
+        </button>
+        <button class="theme-card" data-theme="ulang-tahun" data-category="spesial" id="themeUlangTahun">
+          <span class="theme-emoji">🎂</span>
+          <span class="theme-name">Ulang Tahun</span>
+        </button>
+        <button class="theme-card" data-theme="anniversary" data-category="spesial" id="themeAnniversary">
+          <span class="theme-emoji">💎</span>
+          <span class="theme-name">Anniversary</span>
+        </button>
+        <button class="theme-card" data-theme="tahun-baru" data-category="spesial" id="themeTahunBaru">
+          <span class="theme-emoji">🎆</span>
+          <span class="theme-name">Tahun Baru</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- STEP 2: Data Input -->
+    <section class="panel-section" id="sectionInput">
+      <div class="section-header">
+        <span class="step-badge">2</span>
+        <h2>Input Harga Emas</h2>
+      </div>
+      <textarea id="inputText" placeholder="Paste teks harga emas di sini...
 
 Contoh:
-🛑BISMILLAH
-Ready 2026
 0.5gr = 1.700
 1gr = 3.100
 2gr = 6.000
-3gr = 8.800
 5gr = 14.250
 10gr = 27.850
 25gr = 69.000
 50gr = 137.600
 100gr = 275.000
 
-Atau format lain:
+Format lain juga didukung:
 0,5 gr | 1.640.000
-1 gr = Rp3.140.000
-dst..."></textarea>
+1 gr = Rp3.140.000"></textarea>
 
-    <div class="parsed-preview" id="parsedPreview">
-      <div class="tag" id="parsedCount"></div>
-      <div id="parsedList" style="margin-top:6px;"></div>
+      <div class="parsed-preview" id="parsedPreview">
+        <div class="parsed-header">
+          <span class="parsed-icon">✓</span>
+          <span id="parsedCount"></span>
+        </div>
+        <div id="parsedList"></div>
+      </div>
+    </section>
+
+    <!-- STEP 3: Customization -->
+    <section class="panel-section" id="sectionCustom">
+      <div class="section-header">
+        <span class="step-badge">3</span>
+        <h2>Kustomisasi</h2>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="brandName">Nama Toko</label>
+          <input type="text" id="brandName" placeholder="FOUZA MINI GOLD" value="FOUZA MINI GOLD">
+        </div>
+        <div class="form-group">
+          <label for="customerType">Tipe Customer</label>
+          <input type="text" id="customerType" placeholder="CUSTOMER" value="CUSTOMER">
+        </div>
+        <div class="form-group">
+          <label for="flyerDate">Tanggal</label>
+          <input type="text" id="flyerDate" placeholder="24 April 2026">
+        </div>
+        <div class="form-group">
+          <label for="contactInfo">Kontak</label>
+          <input type="text" id="contactInfo" placeholder="0822-3040-5090" value="0822-3040-5090">
+        </div>
+        <div class="form-group full-width">
+          <label for="greetingText">Ucapan Spesial (opsional)</label>
+          <input type="text" id="greetingText" placeholder="Contoh: Selamat Hari Raya Idul Fitri 1447 H">
+        </div>
+      </div>
+    </section>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons" id="actionButtons">
+      <button class="generate-btn" id="generateBtn" onclick="generateFlyer()">
+        <span class="btn-sparkle">✦</span>
+        GENERATE PAMFLET
+        <span class="btn-sparkle">✦</span>
+      </button>
+      <button class="download-btn" id="downloadBtn" onclick="downloadFlyer()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 12L3 7h3V1h4v6h3L8 12zM2 14h12v1H2v-1z"/>
+        </svg>
+        Download sebagai PNG
+      </button>
+      <div class="status-msg" id="statusMsg"></div>
     </div>
 
-    <div class="options-row">
-      <div class="opt-group">
-        <label>Nama Toko</label>
-        <input type="text" id="brandName" placeholder="FOUZA MINI GOLD" value="FOUZA MINI GOLD">
+    <!-- STEP 4: Chat Caption Template -->
+    <section class="panel-section" id="sectionCaption">
+      <div class="section-header">
+        <span class="step-badge">4</span>
+        <h2>Template Caption Chat</h2>
       </div>
-      <div class="opt-group">
-        <label>Tipe Customer</label>
-        <input type="text" id="customerType" placeholder="CUSTOMER" value="CUSTOMER">
-      </div>
-      <div class="opt-group">
-        <label>Tanggal</label>
-        <input type="text" id="flyerDate" placeholder="24 Apri 2026">
-      </div>
-      <div class="opt-group">
-        <label>Kontak</label>
-        <input type="text" id="contactInfo" placeholder="0822-3040-5090" value="0822-3040-5090">
-      </div>
-      <div class="opt-group full-width">
-        <label>Tema Warna</label>
-        <select id="colorTheme">
-          <option value="teal">Teal Elegan (seperti contoh)</option>
-          <option value="dark">Hitam & Emas</option>
-          <option value="royal">Royal Navy</option>
-        </select>
-      </div>
-    </div>
+      <p class="caption-hint">Generate caption siap copy-paste untuk WhatsApp, Telegram, dll.</p>
 
-    <button class="generate-btn" onclick="generateFlyer()">✦ GENERATE PAMFLET</button>
-    <button class="download-btn" onclick="downloadFlyer()">↓ Download sebagai PNG</button>
-    <div class="status-msg" id="statusMsg"></div>
-  </div>
+      <div class="caption-style-selector" id="captionStyleSelector">
+        <button class="caption-style-btn active" data-style="elegant" id="styleElegant">
+          <span>✨</span> Elegant
+        </button>
+        <button class="caption-style-btn" data-style="clean" id="styleClean">
+          <span>📋</span> Clean
+        </button>
+        <button class="caption-style-btn" data-style="emoji" id="styleEmoji">
+          <span>🎯</span> Fun Emoji
+        </button>
+      </div>
+
+      <button class="generate-caption-btn" id="generateCaptionBtn" onclick="generateCaption()">
+        📝 GENERATE CAPTION
+      </button>
+
+      <div class="caption-output-wrapper" id="captionOutputWrapper">
+        <div class="caption-output-header">
+          <span>📋 Caption Siap Copy</span>
+          <button class="copy-btn" id="copyBtn" onclick="copyCaption()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Copy
+          </button>
+        </div>
+        <pre class="caption-output" id="captionOutput"></pre>
+      </div>
+    </section>
+
+  </aside>
 
   <!-- RIGHT: FLYER PREVIEW -->
-  <div class="flyer-wrapper">
-    <div id="flyerOutput">
-      <div class="empty-flyer">
-        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-          <rect x="8" y="8" width="48" height="48" rx="6" stroke="currentColor" stroke-width="2"/>
-          <path d="M20 32h24M20 22h16M20 42h20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        <p>Pamflet Anda akan<br>muncul di sini setelah<br>klik <strong>Generate</strong></p>
+  <section class="preview-section" id="previewSection">
+    <div class="preview-label">
+      <span>PREVIEW</span>
+    </div>
+    <div class="flyer-wrapper" id="flyerWrapper">
+      <div id="flyerOutput">
+        <div class="empty-flyer" id="emptyFlyer">
+          <div class="empty-icon-wrap">
+            <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
+              <rect x="10" y="10" width="52" height="52" rx="8" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 4"/>
+              <circle cx="36" cy="30" r="8" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M22 50l10-8 6 4 8-10 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <p class="empty-title">Pamflet Anda akan muncul di sini</p>
+          <p class="empty-sub">Pilih tema, input harga, lalu klik <strong>Generate</strong></p>
+        </div>
       </div>
     </div>
-  </div>
-</div>
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="app-footer" id="appFooter">
+  <p>Made with ✦ for Gold Shops everywhere</p>
+</footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="app.js"></script>
