@@ -428,7 +428,7 @@ function buildFlyer(prices, brandName, customerType, flyerDate, contactInfo, gre
       </div>
       <div class="flyer-inner">
         <!-- Header -->
-        <div class="flyer-header" style="background:${t.headerBg};border-radius:14px;padding:20px 22px 16px;margin-bottom:16px;backdrop-filter:blur(8px);">
+        <div class="flyer-header" style="background:${t.headerBg};border-radius:14px;padding:20px 22px 16px;margin-bottom:16px;">
           <div class="flyer-greeting" style="color:${t.subtitleColor}">${greeting}</div>
           <div class="flyer-brand-name" style="color:${t.titleColor}">${brandName}</div>
           <div class="flyer-customer-type" style="color:${t.subtitleColor}">${customerType}</div>
@@ -487,7 +487,35 @@ async function downloadFlyer() {
   try {
     if (typeof html2canvas === 'undefined') { setStatus('Library html2canvas tidak tersedia', 'error'); return; }
     setStatus('Memproses download...', 'info');
-    const canvas = await html2canvas(flyerEl, { scale: 2, backgroundColor: null, logging: false, useCORS: true });
+
+    // Get the theme's base background color for fallback
+    const t = THEMES[selectedTheme];
+    // Extract a solid color from the gradient for html2canvas background
+    const bgMatch = t && t.bg ? t.bg.match(/#[0-9a-fA-F]{6}/) : null;
+    const solidBg = bgMatch ? bgMatch[0] : '#1a1a2e';
+
+    const canvas = await html2canvas(flyerEl, {
+      scale: 3,
+      backgroundColor: solidBg,
+      logging: false,
+      useCORS: true,
+      allowTaint: true,
+      onclone: function(clonedDoc) {
+        const clonedFlyer = clonedDoc.getElementById('flyerCanvas');
+        if (!clonedFlyer) return;
+        // Remove any backdrop-filter since html2canvas doesn't support it
+        clonedFlyer.querySelectorAll('*').forEach(el => {
+          if (el.style.backdropFilter) el.style.backdropFilter = 'none';
+          if (el.style.webkitBackdropFilter) el.style.webkitBackdropFilter = 'none';
+        });
+        // Ensure the flyer background is solid
+        const bgEl = clonedFlyer.querySelector('.flyer-bg');
+        if (bgEl && t) {
+          bgEl.style.background = t.bg;
+          bgEl.style.opacity = '1';
+        }
+      }
+    });
     const link = document.createElement('a');
     link.download = `gold-flyer-${selectedTheme}-${new Date().toISOString().split('T')[0]}.png`;
     link.href = canvas.toDataURL('image/png');
