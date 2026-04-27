@@ -487,6 +487,48 @@ function setStatus(message, type = 'info') {
 }
 
 // ---- DOWNLOAD ----
+
+// Parse CSS gradient string into color stops
+function parseGradient(gradStr) {
+  const angleMatch = gradStr.match(/(\d+)deg/);
+  const angle = angleMatch ? parseInt(angleMatch[1]) : 150;
+  const colorRegex = /(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\))\s+(\d+)%/g;
+  const stops = [];
+  let m;
+  while ((m = colorRegex.exec(gradStr)) !== null) {
+    stops.push({ color: m[1], stop: parseInt(m[2]) / 100 });
+  }
+  return { angle, stops };
+}
+
+// Convert gradient angle to canvas line coordinates
+function gradientCoords(angleDeg, w, h) {
+  const rad = (angleDeg - 90) * Math.PI / 180;
+  const cx = w / 2, cy = h / 2;
+  const len = Math.sqrt(w * w + h * h) / 2;
+  return {
+    x0: cx - Math.cos(rad) * len,
+    y0: cy - Math.sin(rad) * len,
+    x1: cx + Math.cos(rad) * len,
+    y1: cy + Math.sin(rad) * len
+  };
+}
+
+// Draw rounded rectangle
+function roundedRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
 async function downloadFlyer() {
   const flyerEl = document.getElementById('flyerCanvas');
   if (!flyerEl) { setStatus('Buat flyer terlebih dahulu', 'error'); return; }
@@ -494,16 +536,56 @@ async function downloadFlyer() {
     if (typeof html2canvas === 'undefined') { setStatus('Library html2canvas tidak tersedia', 'error'); return; }
     setStatus('Memproses download...', 'info');
 
-    const canvas = await html2canvas(flyerEl, {
-      scale: 3,
+    const t = THEMES[selectedTheme];
+    const scale = 3;
+    const rect = flyerEl.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
+
+    // Step 1: Create final canvas and draw gradient manually
+    const finalCanvas = document.createElement('canvas');
+    finalCanvas.width = w * scale;
+    finalCanvas.height = h * scale;
+    const ctx = finalCanvas.getContext('2d');
+    ctx.scale(scale, scale);
+
+    // Draw gradient background
+    if (t && t.bg) {
+      const { angle, stops } = parseGradient(t.bg);
+      const coords = gradientCoords(angle, w, h);
+      const grad = ctx.createLinearGradient(coords.x0, coords.y0, coords.x1, coords.y1);
+      stops.forEach(s => grad.addColorStop(s.stop, s.color));
+      ctx.fillStyle = grad;
+    } else {
+      ctx.fillStyle = '#1a1a2e';
+    }
+    roundedRect(ctx, 0, 0, w, h, 20);
+    ctx.fill();
+
+    // Step 2: Capture content with html2canvas (transparent background)
+    const contentCanvas = await html2canvas(flyerEl, {
+      scale: scale,
       backgroundColor: null,
       logging: false,
       useCORS: true,
-      allowTaint: true
+      allowTaint: true,
+      onclone: function(clonedDoc) {
+        // Remove the gradient from the cloned element so content is on transparent bg
+        const el = clonedDoc.getElementById('flyerCanvas');
+        if (el) {
+          el.style.background = 'none';
+          el.style.backgroundColor = 'transparent';
+        }
+      }
     });
+
+    // Step 3: Overlay content on top of gradient
+    ctx.drawImage(contentCanvas, 0, 0, w, h);
+
+    // Step 4: Download
     const link = document.createElement('a');
     link.download = `gold-flyer-${selectedTheme}-${new Date().toISOString().split('T')[0]}.png`;
-    link.href = canvas.toDataURL('image/png');
+    link.href = finalCanvas.toDataURL('image/png');
     document.body.appendChild(link);
     link.click();
     link.remove();
